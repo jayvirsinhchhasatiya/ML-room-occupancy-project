@@ -11,6 +11,7 @@ To identify whether there is any person present in a room or not
 ## Authors
 
 - [@jayvirsinhchhasatiya](https://www.github.com/jayvirsinhchhasatiya)
+- [@Dhwani_48](https://www.github.com/Dhwani_48)
 
 
 ## About Problem
