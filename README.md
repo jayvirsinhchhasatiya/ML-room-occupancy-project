@@ -53,8 +53,26 @@ from sklearn.metrics import confusion_matrix
 ### Loading Dataset
 
 ```python
-df = pd.read_csv("C:\\Users\\JAYVIR CHHASATIYA\\Desktop\\Data science\\case-study-june-2022 (1)\\data\\occupancy.csv")
+occupancy_dataset = pd.read_csv("C:\\Users\\JAYVIR CHHASATIYA\\Desktop\\Data science\\case-study-june-2022 (1)\\data\\occupancy.csv")
 
 ```
+### Checking info of features
+```python
+occupancy_dataset.info()
 
+```
+- All feature has numerical datatype
+
+### Checking for missing values
+```python
+occupancy_dataset.isna().sum()
+
+```
+- There is no missing values in our dataset
+- There is no categorical data
+
+### ploting graphs
+```python
+
+```
 
