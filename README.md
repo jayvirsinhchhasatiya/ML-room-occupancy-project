@@ -379,6 +379,8 @@ if __name__ == "__main__":
 
 ```
 ### HTML page 
+- It is a basic HTML page 
+- It takes .csv file as input and write output in that csv file
 ```python
 <!DOCTYPE html>
 <html>
