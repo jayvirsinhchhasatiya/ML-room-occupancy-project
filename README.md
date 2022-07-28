@@ -1,5 +1,6 @@
 
 
+
 # Room Occupancy Detection using Machine Learning
 
 ## Problem Statement
@@ -277,3 +278,147 @@ print(rf_report)
 ```python
 pickle.dump(pipeline_rf,open('pipe.pkl','wb'))
 ```
+
+### Final model file
+- model.py
+```python
+# Importing the libraries
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier 
+import pickle
+
+# loading the dataset of room occupancy
+occupancy_dataset= pd.read_csv('C:\\Users\\JAYVIR CHHASATIYA\\Desktop\\Data science\\case-study-june-2022 (1)\\data\\occupancy.csv')
+
+# seperating the data and labels
+X = occupancy_dataset.drop(['Occupancy','date','HumidityRatio'],axis=1)
+Y = occupancy_dataset['Occupancy']
+
+X_train,X_test,Y_train,Y_test = train_test_split(X, Y, test_size = 0.2, stratify = Y, random_state = 2)
+#stratify for splitting dataset which will not led to move all 1 output in X and 0 in Y it will be equal
+
+# model using random forest classifier algorithm
+pipeline_rf=Pipeline([('scalar3',StandardScaler()),
+('pca3',PCA(0.95)),
+('rf_classifier',RandomForestClassifier())])
+
+pipeline_rf.fit(X_train, Y_train)
+
+# export
+pickle.dump(pipeline_rf,open('pipe.pkl','wb'))
+model = pickle.load(open('pipe.pkl','rb'))
+
+```
+
+### Deployment of model
+
+- We deploy our model using Flask framework
+- test.py file
+
+```python
+import pandas as pd
+import numpy as np
+from flask import Flask, request, send_file, render_template
+import pickle
+import os
+
+app = Flask(__name__)
+model = pickle.load(open('pipe.pkl', 'rb'))
+
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    '''
+    For rendering results on HTML GUI
+    '''
+
+    file=request.files['file']
+    data = pd.read_csv(file)
+
+    col_names = data.columns.values.tolist()
+    col_sorted = col_names.sort()
+    list = ['date', 'Temperature', 'Humidity', 'Light', 'CO2', 'HumidityRatio']
+    list_sort = list.sort()
+    if(col_sorted == list_sort):
+        temp = data['Temperature'].mean()
+        hum = data['Humidity'].mean()
+        light = data['Light'].mean()
+        co2 = data['CO2'].mean()
+        hr = data['HumidityRatio'].mean()
+
+        data = data.fillna(value={
+            'Temperature':temp,
+            'Humidity':hum,
+            'Light':light,
+            'CO2':co2,
+            'HumidityRatio':hr
+        })
+
+        new_file=data.drop(['date', 'HumidityRatio'], axis=1)
+
+        prediction=model.predict(new_file)
+        data['Occupancy']=prediction
+        final = data.to_csv('roomoccupancy.csv', index=False)
+
+        return render_template('index.html', prediction_text='Your output file is downloaded in your device named as "roomoccupancy.csv"')
+    else:
+        return render_template('index.html', prediction_text='Uploaded file has insufficient column')
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+```
+### HTML page 
+```python
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" type="text/css" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <title>Room occupancy prediction</title>
+</head>
+
+<body>
+
+    <div class="container">
+        <br>
+        <h2 class="text-center">Room occupancy precision</h2>
+        <div class="col-lg-12 m-auto d-block">
+            <form id="tryme" action="{{ url_for('predict')}}" name="form" method="POST" enctype="multipart/form-data" onsubmit="return validate(name, email, phone, image)">
+                <div class="row jumbotron">
+                    <!-- image -->
+
+                    <div class="col-lg-6 form-group">
+                        <label for="file">Upload Your csv file</label>
+                        <input type="file" name="file" class="form-control-file" id="file" required>
+                    </div>
+
+                    <!-- submit -->
+
+                    <div class="col-sm-6 form-group">
+                        <button type="submit" name="submit" class="btn btn-primary float-centre" >Submit</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {{ prediction_text }}
+    </div>
+</body>
+
+</html>
+```
+
